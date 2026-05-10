@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Debt Book</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #ffdfe9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* MAIN CARD (like your picture) */
+.box {
+    background: white;
+    padding: 25px;
+    width: 400px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+h1 {
+    color: #2563eb;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+/* INPUT STYLE */
+input {
+    width: 90%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+/* BUTTON */
+button {
+    width: 95%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 12px;
+    background: #007bff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056d6;
+}
+
+/* LIST */
+.card {
+    background: #f8f8f8;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: left;
+}
+
+.name {
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>📒 DEBT BOOK</h1>
+
+    <input id="name" placeholder="Customer Name">
+    <input id="amount" type="number" placeholder="Debt Amount (RM)">
+    <button onclick="addDebt()">ADD</button>
+
+    <div id="list"></div>
+</div>
+
+<script>
+let debts = JSON.parse(localStorage.getItem("debts")) || {};
+
+function save(){
+    localStorage.setItem("debts", JSON.stringify(debts));
+}
+
+/* 🔊 NORMAL VOICE */
+function speak(text){
+    let msg = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(msg);
+}
+
+/* 🔊 WARNING VOICE */
+function warningVoice(){
+    let msg = new SpeechSynthesisUtterance(
+        "Warning: Buyer’s debt is over the limit"
+    );
+    msg.rate = 0.9;
+    msg.pitch = 1;
+    speechSynthesis.speak(msg);
+}
+
+function addDebt(){
+    let name = document.getElementById("name").value.trim();
+    let amount = parseFloat(document.getElementById("amount").value);
+
+    if(!name || isNaN(amount)) return;
+
+    if(debts[name]){
+        debts[name] += amount;
+    } else {
+        debts[name] = amount;
+    }
+
+    save();
+
+    speak(name + " owes RM " + debts[name]);
+
+    checkLimit(name);
+    render();
+
+    document.getElementById("name").value = "";
+    document.getElementById("amount").value = "";
+}
+
+/* 🚨 LIMIT CHECK */
+function checkLimit(name){
+    if(debts[name] >= 50){
+        warningVoice();
+    }
+}
+
+function markPaid(name){
+    delete debts[name];
+    save();
+    render();
+}
+
+/* DISPLAY */
+function render(){
+    let list = document.getElementById("list");
+    list.innerHTML = "";
+
+    for(let name in debts){
+        list.innerHTML += `
+        <div class="card">
+            <div class="name">${name}</div>
+            <div>RM ${debts[name]}</div>
+            <button onclick="markPaid('${name}')">PAID</button>
+        </div>
+        `;
+    }
+}
+
+render();
+</script>
+
+</body>
+</html>
